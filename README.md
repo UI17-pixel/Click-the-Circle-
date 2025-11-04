@@ -1,2 +1,231 @@
 # Click-the-Circle-
 The goal is to click the red circle as many times as you can before the 10-second timer runs out. Each click moves the circle to a new random position.
+[click.html](https://github.com/user-attachments/files/23337021/click.html)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click the Circle Game</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the game */
+        body {
+            /* Use a nice gradient background */
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', sans-serif; /* Tailwind's default font */
+        }
+
+        /* The game container */
+        #game-container {
+            width: 90%;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 16px; /* Extra rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* The game area where the circle appears */
+        #game-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-color: #f1f5f9; /* Light gray bg */
+            border-radius: 12px;
+            margin-top: 1.5rem;
+            overflow: hidden; /* Keep the circle inside */
+            cursor: crosshair;
+        }
+
+        /* The circle to be clicked */
+        #target {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: #ef4444; /* Red */
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.15s ease-out; /* Smooth movement */
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);
+            border: 3px solid white;
+        }
+
+        /* Fun hover effect for the circle */
+        #target:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.7);
+        }
+
+        /* Style for the buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: white;
+            background-color: #3b82f6; /* Blue */
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px); /* Slight lift on hover */
+        }
+        
+        /* Specific style for restart button */
+        .btn-restart {
+            background-color: #10b981; /* Green */
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-restart:hover {
+            background-color: #059669;
+        }
+
+        /* Hide elements dynamically */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <!-- Main Game Container -->
+    <div id="game-container">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Click the Circle!</h1>
+        <p class="text-lg text-gray-600 mb-6">Click the red circle as many times as you can in 10 seconds.</p>
+
+        <!-- Score and Time Display -->
+        <div class="flex justify-around text-2xl font-semibold text-gray-700 mb-6">
+            <div>Score: <span id="score-display" class="text-blue-600">0</span></div>
+            <div>Time: <span id="time-display" class="text-red-600">10</span>s</div>
+        </div>
+
+        <!-- Start Button -->
+        <button id="start-button" class="btn">Start Game</button>
+
+        <!-- Game Over Message -->
+        <div id="game-over-message" class="hidden mt-6">
+            <h2 class="text-3xl font-bold text-red-500">Game Over!</h2>
+            <p class="text-2xl mt-2">Your final score: <span id="final-score" class="font-bold">0</span></p>
+            <button id="restart-button" class="btn btn-restart mt-4">Play Again</button>
+        </div>
+
+        <!-- The Game Area -->
+        <div id="game-area" class="hidden">
+            <div id="target"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const target = document.getElementById('target');
+        const gameArea = document.getElementById('game-area');
+        const scoreDisplay = document.getElementById('score-display');
+        const timeDisplay = document.getElementById('time-display');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const finalScore = document.getElementById('final-score');
+
+        // --- Game State Variables ---
+        let score = 0;
+        let timeLeft = 10;
+        let gameTimer;
+        let isGameRunning = false;
+
+        // --- Game Functions ---
+
+        /**
+         * Starts the game
+         */
+        function startGame() {
+            // Reset game state
+            score = 0;
+            timeLeft = 10;
+            isGameRunning = true;
+            
+            // Update UI
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft;
+            startButton.classList.add('hidden');
+            gameOverMessage.classList.add('hidden');
+            gameArea.classList.remove('hidden');
+
+            // Move the target to its first position
+            moveTarget();
+
+            // Start the game timer
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        /**
+         * Ends the game
+         */
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(gameTimer); // Stop the timer
+
+            // Update UI
+            gameArea.classList.add('hidden');
+            finalScore.textContent = score;
+            gameOverMessage.classList.remove('hidden');
+            startButton.classList.remove('hidden'); // Show start button again (which now acts as play again)
+            startButton.textContent = "Play Again?"; // Change text
+        }
+
+        /**
+         * Moves the target to a random position within the game area
+         */
+        function moveTarget() {
+            const areaWidth = gameArea.clientWidth;
+            const areaHeight = gameArea.clientHeight;
+            
+            const targetWidth = target.offsetWidth;
+            const targetHeight = target.offsetHeight;
+
+            // Calculate max random position
+            const maxX = areaWidth - targetWidth;
+            const maxY = areaHeight - targetHeight;
+
+            // Generate random coordinates
+            const randomX = Math.floor(Math.random() * maxX);
+            const randomY = Math.floor(Math.random() * maxY);
+
+            // Apply the new position
+            target.style.left = randomX + 'px';
+            target.style.top = randomY + 'px';
+        }
+
+        /**
+         * Handles clicking the target
+         */
+        function onTargetClick() {
+            if (isGameRunning) {
+                score++;
+                scoreDisplay.textContent = score;
+                moveTarget();
+            }
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame); // Restart button also calls startGame
+        target.addEventListener('click', onTargetClick);
+
+    </script>
+</body>
+</html>
